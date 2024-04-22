@@ -594,51 +594,51 @@ const char *EnsureMessage(u8 ensure)
 	switch(ensure)
 	{
 		case  0x00:
-			p="OK";break;		
+			p="OK\r\n";break;		
 		case  0x01:
-			p="Database receive error";break;
+			p="Database receive error\r\n";break;
 		case  0x02:
-			p="No finger on the sensor";break;
+			p="No finger on the sensor\r\n";break;
 		case  0x03:
-			p="logging image failure";break;
+			p="logging image failure\r\n";break;
 		case  0x04:
-			p="finger too dry or thin";break;
+			p="finger too dry or thin\r\n";break;
 		case  0x05:
-			p="finger too wet or dim";break;
+			p="finger too wet or dim\r\n";break;
 		case  0x06:
-			p="finger image is messy";break;
+			p="finger image is messy\r\n";break;
 		case  0x07:
-			p="finger features too little";break;
+			p="finger features too little\r\n";break;
 		case  0x08:
-			p="fingerprint mismatched";break;
+			p="fingerprint mismatched\r\n";break;
 		case  0x09:
-			p="No search for fingerprint";break;
+			p="No search for fingerprint\r\n";break;
 		case  0x0a:
-			p="Integrate featurea failure";break;
+			p="Integrate featurea failure\r\n";break;
 		case  0x0b:
-			p="address exceed scope";
+			p="address exceed scope\r\n";
 		case  0x10:
-			p="delete template failure";break;
+			p="delete template failure\r\n";break;
 		case  0x11:
-			p="clean fingerbase failure";break;	
+			p="clean fingerbase failure\r\n";break;	
 		case  0x15:
-			p="No valid image in buffer";break;
+			p="No valid image in buffer\r\n";break;
 		case  0x18:
-			p="write and read flash error";break;
+			p="write and read flash error\r\n";break;
 		case  0x19:
-			p="Undefined error";break;
+			p="Undefined error\r\n";break;
 		case  0x1a:
-			p="Invalid register";break;
+			p="Invalid register\r\n";break;
 		case  0x1b:
-			p="Details in register error";break;
+			p="Details in register error\r\n";break;
 		case  0x1c:
-			p="Note page error";break;
+			p="Note page error\r\n";break;
 		case  0x1f:
-			p="Full of fingerprint bank";break;
+			p="Full of fingerprint bank\r\n";break;
 		case  0x20:
-			p="address error";break;
+			p="address error\r\n";break;
 		default :
-			p="return confirmed num error";break;
+			p="return confirmed num error\r\n";break;
 	}
  return p;	
 }
@@ -651,7 +651,7 @@ void ShowErrMessage(u8 ensure)
 	Delay_ms(1000);
 }
 
-//录指纹功能
+/*录指纹功能*/
 void Add_FR(void)
 {
 	u8 i=0,ensure ,processnum=0;
@@ -664,28 +664,33 @@ void Add_FR(void)
 		{
 			case 0:
 				i++;
-				Serial_Printf("Please Press finger！\r\n");
+				Serial_Printf("Please Press finger!\r\n");
 				ensure=PS_GetImage();
 				if(ensure==0x00) 
 				{
 					ensure=PS_GenChar(CharBuffer1);//生成特征
-					if(ensure==0x00)
+					if(ensure==0x00)//指纹正确
 					{
-						
-						//指纹正确
 						Serial_Printf("Correct finger\r\n");
 						i=0;
 						processnum=1;//跳到第二步						
 					}
-					else ShowErrMessage(ensure);				
+					else
+					{
+						ShowErrMessage(ensure);
+					} 				
 				}
-				else ShowErrMessage(ensure);						
+				else
+				{
+					ShowErrMessage(ensure);
+				} 						
 				break;
 			
 			case 1:
 				i++;
 				Serial_Printf("Try again\r\n");
 				ensure=PS_GetImage();
+				
 				if(ensure==0x00) 
 				{
 					ensure= (CharBuffer2);//生成特征			
@@ -693,12 +698,16 @@ void Add_FR(void)
 					i=0; 
 					processnum=2;//跳到第三步		
 				}
-				else ShowErrMessage(ensure);		
+				else 
+				{
+					ShowErrMessage(ensure);	
+				}	
 				break;
 
 			case 2:
 				Serial_Printf("Comparing\r\n");
 				ensure=PS_Match();
+				Delay_ms(3000);
 				if(ensure==0x00) 
 				{
 					Serial_Printf("Same!\r\n");
@@ -706,7 +715,7 @@ void Add_FR(void)
 				}
 				else 
 				{
-					Serial_Printf("Failed,try again！\r\n");
+					Serial_Printf("Failed,try again!\r\n");
 					ShowErrMessage(ensure);
 					i=0;
 					processnum=0;//跳回第一步		
@@ -731,7 +740,7 @@ void Add_FR(void)
 				break;
 				
 			case 4:	
-				Serial_Printf("input where you store：\r\n");
+				Serial_Printf("input where you store:\r\n");
 				while(1)
 				{
 					if(USART1_RX_STA&0X8000)
@@ -767,13 +776,16 @@ void Add_FR(void)
 					Serial_Printf("waitting！");
 					return ;
 				}else 
-				{processnum=0;ShowErrMessage(ensure);}					
+				{
+					processnum=0;
+					ShowErrMessage(ensure);
+				}					
 				break;				
 		}
 		Delay_ms(1000);
 		if(i==5)//超过5次没有按手指则退出
 		{
-			Serial_Printf("exit！\r\n");
+			Serial_Printf("exit!\r\n");
 			break;	
 		}				
 	}
@@ -807,9 +819,9 @@ void FrMatch(void)
 				OLED_ShowString(16, 0, "Door Open!",OLED_8X16);
 				OLED_Update();
 				Delay_ms(1000);
-				
 			}
      		else 
+			{
 				ShowErrMessage(ensure);	
 				LED2_OFF();
 				LED3_OFF();
@@ -818,6 +830,8 @@ void FrMatch(void)
 				OLED_ShowString(16, 16, "Fault FP!", OLED_8X16);
 				OLED_Update();
 				Delay_ms(1000);
+			}
+				
 	 	}
 	    else
 		{

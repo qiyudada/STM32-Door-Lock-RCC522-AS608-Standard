@@ -143,6 +143,13 @@ int main(void)
 				task=4;	
 			
 		}
+		else if((GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_10) == 0))
+		{
+			OLED_Clear();
+			OLED_ShowString(14,16,">>AddFinger<<",OLED_8X16);
+			OLED_Update();
+			task=5;	
+		}
 		//Assignment Choose
 		switch(task)
 		{
@@ -163,6 +170,9 @@ int main(void)
 							task=0;
 // 							while((T=HCSR04_GetValue())<20);
 							break;
+			case 5 : Add_FR();
+							task=0;
+							break;				
 
 			default : LED1_OFF();//default state	
 							LED2_ON();
