@@ -16,66 +16,63 @@ void STMFLASH_Write_NoCheck(u32 WriteAddr,u16 *pBuffer,u16 NumToWrite)
 	for(i=0;i<NumToWrite;i++)
 	{
 		FLASH_ProgramHalfWord(WriteAddr,pBuffer[i]);
-	    WriteAddr+=2;//��ַ����2.
+	    WriteAddr+=2;
 	}  
 } 
 
 #if STM32_FLASH_SIZE<256
-#define STM_SECTOR_SIZE 1024 //�ֽ�
+#define STM_SECTOR_SIZE 1024 
 #else 
 #define STM_SECTOR_SIZE	2048
 #endif		 
-u16 STMFLASH_BUF[STM_SECTOR_SIZE/2];//�����2K�ֽ�
+u16 STMFLASH_BUF[STM_SECTOR_SIZE/2];
 void STMFLASH_Write(u32 WriteAddr,u16 *pBuffer,u16 NumToWrite)	
 {
-	u32 secpos;	   //������ַ
-	u16 secoff;	   //������ƫ�Ƶ�ַ(16λ�ּ���)
-	u16 secremain; //������ʣ���ַ(16λ�ּ���)	   
+	u32 secpos;	  
+	u16 secoff;	   
+	u16 secremain;    
  	u16 i;    
-	u32 offaddr;   //ȥ��0X08000000��ĵ�ַ
+	u32 offaddr;   
 	if(WriteAddr<STM32_FLASH_BASE||(WriteAddr>=(STM32_FLASH_BASE+1024*STM32_FLASH_SIZE)))return;//�Ƿ���ַ
-	FLASH_Unlock();						//����
-	offaddr=WriteAddr-STM32_FLASH_BASE;		//ʵ��ƫ�Ƶ�ַ.
-	secpos=offaddr/STM_SECTOR_SIZE;			//������ַ  0~127 for STM32F103RBT6
-	secoff=(offaddr%STM_SECTOR_SIZE)/2;		//�������ڵ�ƫ��(2���ֽ�Ϊ������λ.)
-	secremain=STM_SECTOR_SIZE/2-secoff;		//����ʣ��ռ��С   
-	if(NumToWrite<=secremain)secremain=NumToWrite;//�����ڸ�������Χ
+	FLASH_Unlock();					
+	offaddr=WriteAddr-STM32_FLASH_BASE;		
+	secpos=offaddr/STM_SECTOR_SIZE;			
+	secoff=(offaddr%STM_SECTOR_SIZE)/2;		
+	secremain=STM_SECTOR_SIZE/2-secoff;		   
+	if(NumToWrite<=secremain)secremain=NumToWrite;
 	while(1) 
 	{	
-		STMFLASH_Read(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE,STMFLASH_BUF,STM_SECTOR_SIZE/2);//������������������
-		for(i=0;i<secremain;i++)//У������
+		STMFLASH_Read(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE,STMFLASH_BUF,STM_SECTOR_SIZE/2);
+		for(i=0;i<secremain;i++)
 		{
-			if(STMFLASH_BUF[secoff+i]!=0XFFFF)break;//��Ҫ����  	  
+			if(STMFLASH_BUF[secoff+i]!=0XFFFF)break; 	  
 		}
-		if(i<secremain)//��Ҫ����
+		if(i<secremain)
 		{
-			FLASH_ErasePage(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE);//�����������
-			for(i=0;i<secremain;i++)//����
+			FLASH_ErasePage(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE);
+			for(i=0;i<secremain;i++)
 			{
 				STMFLASH_BUF[i+secoff]=pBuffer[i];	  
 			}
-			STMFLASH_Write_NoCheck(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE,STMFLASH_BUF,STM_SECTOR_SIZE/2);//д����������  
-		}else STMFLASH_Write_NoCheck(WriteAddr,pBuffer,secremain);//д�Ѿ������˵�,ֱ��д������ʣ������. 				   
-		if(NumToWrite==secremain)break;//д�������
-		else//д��δ����
+			STMFLASH_Write_NoCheck(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE,STMFLASH_BUF,STM_SECTOR_SIZE/2);  
+		}else STMFLASH_Write_NoCheck(WriteAddr,pBuffer,secremain);			   
+		if(NumToWrite==secremain)break;
+		else
 		{
-			secpos++;				//������ַ��1
-			secoff=0;				//ƫ��λ��Ϊ0 	 
-		   	pBuffer+=secremain;  	//ָ��ƫ��
-			WriteAddr+=secremain;	//д��ַƫ��	   
-		   	NumToWrite-=secremain;	//�ֽ�(16λ)���ݼ�
-			if(NumToWrite>(STM_SECTOR_SIZE/2))secremain=STM_SECTOR_SIZE/2;//��һ����������д����
-			else secremain=NumToWrite;//��һ����������д����
+			secpos++;				
+			secoff=0;				 	 
+		   	pBuffer+=secremain;  	
+			WriteAddr+=secremain;	   
+		   	NumToWrite-=secremain;	
+			if(NumToWrite>(STM_SECTOR_SIZE/2))secremain=STM_SECTOR_SIZE/2;
+			else secremain=NumToWrite;
 		}	 
 	};	
 	FLASH_Lock();//����
 }
 #endif
 
-//��ָ����ַ��ʼ����ָ�����ȵ�����
-//ReadAddr:��ʼ��ַ
-//pBuffer:����ָ��
-//NumToWrite:����(16λ)��
+
 void STMFLASH_Read(u32 ReadAddr,u16 *pBuffer,u16 NumToRead)   	
 {
 	u16 i;
